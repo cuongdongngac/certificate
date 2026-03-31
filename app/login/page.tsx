@@ -28,11 +28,11 @@ export default function LoginPage() {
         if (!signUpData.user) throw new Error("Không thể tạo tài khoản.");
 
         // 2. Kiểm tra xem có người dùng nào trong bảng profiles chưa
-        // Lưu ý: Chúng ta kiểm tra bảng profiles thay vì auth.users 
+        // Lưu ý: Chúng ta kiểm tra bảng profiles thay vì auth.users
         // vì client side không thể đếm trực tiếp auth.users một cách bảo mật
         const { count, error: checkError } = await supabase
           .from("profiles")
-          .select("*", { count: 'exact', head: true });
+          .select("*", { count: "exact", head: true });
 
         if (checkError) {
           console.error("Lỗi kiểm tra profiles:", checkError);
@@ -102,6 +102,7 @@ export default function LoginPage() {
             )}
           </p>
         </div>
+
         <form className="mt-8 space-y-6" onSubmit={handleAuth}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div>

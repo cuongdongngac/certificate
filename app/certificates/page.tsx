@@ -114,17 +114,16 @@ export default function CertificatesPage() {
     setIsModalOpen(true);
   };
 
+  useEffect(() => {
+    console.log("Auth State:", {
+      user: !!user,
+      role: profile?.role,
+      authLoading,
+    });
+  }, [user, profile, authLoading]);
+
   return (
     <div className="container mx-auto py-10 px-4 max-w-7xl">
-      {/* Thông báo chẩn đoán cho admin */}
-      <div className="hidden">
-        {console.log("Auth State:", {
-          user: !!user,
-          role: profile?.role,
-          authLoading,
-        })}
-      </div>
-
       <div className="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100 transition-all duration-300 hover:shadow-2xl">
         <div className="bg-blue-600 p-8 flex flex-col md:flex-row justify-between items-center gap-6">
           <div>
