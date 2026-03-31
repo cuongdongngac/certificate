@@ -7,27 +7,40 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 function SearchContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [certificate, setCertificate] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (query.trim()) {
+      router.push(`/?q=${encodeURIComponent(query.trim())}`, { scroll: false });
+    }
+  };
 
   useEffect(() => {
     const q = searchParams.get("q");
     if (q) {
       setQuery(q);
       const fetchCertificate = async () => {
-        const { data, error: dbError } = await supabase
-          .from("certificates")
-          .select("*")
-          .eq("certificate_no", q)
-          .single();
+        try {
+          const { data, error: dbError } = await supabase
+            .from("certificates")
+            .select("*")
+            .eq("certificate_no", q)
+            .single();
 
-        if (dbError) {
-          setError("Không tìm thấy thông tin văn bằng hoặc có lỗi xảy ra.");
+          if (dbError) {
+            setError("Không tìm thấy thông tin văn bằng hoặc có lỗi xảy ra.");
+            setCertificate(null);
+          } else {
+            setCertificate(data);
+            setError(null);
+          }
+        } catch (err) {
+          setError("Lỗi kết nối hệ thống.");
           setCertificate(null);
-        } else {
-          setCertificate(data);
-          setError(null);
         }
       };
       fetchCertificate();
@@ -52,15 +65,14 @@ function SearchContent() {
 
         <div className="mt-8 bg-white p-6 rounded-xl shadow-lg border border-gray-100">
           <form
-            action="/"
-            method="GET"
+            onSubmit={handleSearch}
             className="flex flex-col sm:flex-row gap-4"
           >
             <div className="relative flex-grow">
               <input
                 type="text"
-                name="q"
-                defaultValue={query}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
                 placeholder="Nhập số hiệu văn bằng (VD: VB123456)"
                 className="w-full px-4 py-3 border-2 border-blue-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                 required

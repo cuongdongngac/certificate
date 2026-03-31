@@ -24,19 +24,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Kiểm tra biến môi trường
+    if (
+      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY &&
+        !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY)
+    ) {
+      console.error(
+        "Thiếu biến môi trường Supabase! Hãy kiểm tra file .env hoặc cấu hình trên Vercel.",
+      );
+    }
+
     // Kiểm tra session hiện tại
-    const getSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await fetchProfile(session.user.id);
+    const initAuth = async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (session?.user) {
+          setUser(session.user);
+          await fetchProfile(session.user.id);
+        } else {
+          setUser(null);
+          setProfile(null);
+        }
+      } catch (error) {
+        console.error("Lỗi khởi tạo Auth:", error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
-    getSession();
+    initAuth();
 
     // Lắng nghe thay đổi trạng thái auth
     const {
@@ -44,19 +64,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth Event:", event);
 
-      if (event === "SIGNED_OUT") {
+      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+        if (session?.user) {
+          setUser(session.user);
+          await fetchProfile(session.user.id);
+        }
+      } else if (event === "SIGNED_OUT") {
         setUser(null);
         setProfile(null);
-        setLoading(false);
-        return;
       }
 
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await fetchProfile(session.user.id);
-      } else {
-        setProfile(null);
-      }
       setLoading(false);
     });
 
