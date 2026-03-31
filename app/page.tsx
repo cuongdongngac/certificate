@@ -1,65 +1,194 @@
-import Image from "next/image";
+import { supabase } from "@/lib/supabase";
+import PrintButton from "@/components/PrintButton";
 
-export default function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const query = (await searchParams).q;
+  let certificate = null;
+  let error = null;
+
+  if (query) {
+    const { data, error: dbError } = await supabase
+      .from("certificates")
+      .select("*")
+      .eq("certificate_no", query)
+      .single();
+
+    if (dbError) {
+      error = "Không tìm thấy thông tin văn bằng hoặc có lỗi xảy ra.";
+    } else {
+      certificate = data;
+    }
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl w-full space-y-8">
+        <div className="text-center">
+          <h1 className="text-4xl font-extrabold text-blue-900 tracking-tight">
+            HỆ THỐNG TRA CỨU VĂN BẰNG
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="mt-3 text-lg text-gray-600">
+            Nhập số hiệu văn bằng để kiểm tra thông tin chính xác từ hệ thống
           </p>
+          <div className="mt-4">
+            <a 
+              href="/import" 
+              className="text-sm text-blue-600 hover:underline inline-flex items-center gap-1"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              Trang Import Dữ Liệu
+            </a>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        <div className="mt-8 bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+          <form
+            action="/"
+            method="GET"
+            className="flex flex-col sm:flex-row gap-4"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <div className="relative flex-grow">
+              <input
+                type="text"
+                name="q"
+                defaultValue={query}
+                placeholder="Nhập số hiệu văn bằng (VD: VB123456)"
+                className="w-full px-4 py-3 border-2 border-blue-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition duration-200 shadow-md flex items-center justify-center gap-2"
+            >
+              Tra cứu ngay
+            </button>
+          </form>
         </div>
-      </main>
+
+        {error && (
+          <div className="mt-6 p-4 bg-red-50 border-l-4 border-red-400 text-red-700 rounded-md">
+            {error}
+          </div>
+        )}
+
+        {certificate && (
+          <div className="mt-8 bg-white overflow-hidden shadow-xl rounded-2xl border border-gray-100">
+            <div className="bg-blue-900 px-6 py-4">
+              <h2 className="text-xl font-bold text-white uppercase tracking-wider">
+                Kết quả tra cứu: {certificate.certificate_no}
+              </h2>
+            </div>
+
+            <div className="p-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                {/* Thông tin cá nhân */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-bold text-blue-600 uppercase border-b border-blue-100 pb-2">
+                    Thông tin cá nhân
+                  </h3>
+                  <div className="space-y-3">
+                    <InfoRow label="Họ và tên" value={certificate.full_name} />
+                    <InfoRow
+                      label="Ngày sinh"
+                      value={certificate.date_of_birth}
+                    />
+                    <InfoRow
+                      label="Nơi sinh"
+                      value={certificate.place_of_birth}
+                    />
+                    <InfoRow label="Giới tính" value={certificate.gender} />
+                    <InfoRow label="Dân tộc" value={certificate.ethnicity} />
+                    <InfoRow
+                      label="Quốc tịch"
+                      value={certificate.nationality}
+                    />
+                  </div>
+                </div>
+
+                {/* Thông tin đào tạo */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-bold text-blue-600 uppercase border-b border-blue-100 pb-2">
+                    Thông tin đào tạo
+                  </h3>
+                  <div className="space-y-3">
+                    <InfoRow
+                      label="Hình thức đào tạo"
+                      value={certificate.training_mode}
+                    />
+                    <InfoRow label="Ngành học" value={certificate.major} />
+                    <InfoRow label="Khóa học" value={certificate.course} />
+                    <InfoRow
+                      label="Năm nhập học"
+                      value={certificate.enrollment_year}
+                    />
+                    <InfoRow
+                      label="Năm tốt nghiệp"
+                      value={certificate.graduation_year}
+                    />
+                    <InfoRow
+                      label="Xếp loại"
+                      value={certificate.classification}
+                    />
+                  </div>
+                </div>
+
+                {/* Thông tin quyết định */}
+                <div className="md:col-span-2 space-y-4 mt-4">
+                  <h3 className="text-sm font-bold text-blue-600 uppercase border-b border-blue-100 pb-2">
+                    Thông tin quyết định & Sổ gốc
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3">
+                    <InfoRow
+                      label="Số quyết định HĐ chấm luận văn"
+                      value={certificate.thesis_committee_decision_no}
+                    />
+                    <InfoRow
+                      label="Ngày bảo vệ luận văn"
+                      value={certificate.thesis_defense_date}
+                    />
+                    <InfoRow
+                      label="Số quyết định tốt nghiệp"
+                      value={certificate.graduation_decision_no}
+                    />
+                    <InfoRow
+                      label="Số vào sổ gốc"
+                      value={certificate.registry_no}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-12 flex justify-center">
+                <PrintButton />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!query && (
+          <div className="mt-12 text-center text-gray-500">
+            <p>Vui lòng nhập số hiệu văn bằng để xem chi tiết.</p>
+          </div>
+        )}
+      </div>
+
+      <footer className="mt-auto py-8 text-center text-gray-400 text-sm">
+        &copy; {new Date().getFullYear()} Hệ thống Tra cứu Văn bằng Trực tuyến
+      </footer>
+    </div>
+  );
+}
+
+function InfoRow({ label, value }: { label: string; value: any }) {
+  return (
+    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline border-b border-gray-50 pb-1">
+      <span className="text-gray-500 text-sm font-medium">{label}:</span>
+      <span className="text-gray-900 font-semibold">{value || "---"}</span>
     </div>
   );
 }
